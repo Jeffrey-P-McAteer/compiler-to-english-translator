@@ -19,6 +19,26 @@ so make sure the error stream is directed to `./translator.py`.
 
 Also `./translator.py` uses python3.
 
+## Example io
+
+```
+g++ input_output_flips.cpp |& ./translator.py
+```
+
+yields
+
+```
+Done reading in errors
+2 errors
+
+in file input_output_flips.cpp line 5:
+Your main function returns something of type int, when any sane program will return an integer.
+
+in file input_output_flips.cpp line 6:
+You appear to have written something like 'cout >> my_var', when you should have done 'cout << my_var'.
+
+```
+
 ## Prereqs
 
 The `termcolor` module is used to provide terminal colors.
