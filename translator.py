@@ -18,6 +18,9 @@ class CppError():
       if " In function " in line or "file included from" in line or ("from " in line and (line[-1] == "," or line[-2] == "," )):
         continue # this data currently ignored
       
+      if "^" in line and "~" in line:
+        continue # ignore underline lines (we could parse out index data for the specific char where error occurs)
+      
       if self.err_file == None and self.err_line == None:
         split_file_and_number = line.split(":")
         self.err_file = split_file_and_number[0]
@@ -48,6 +51,12 @@ class CppError():
     
     if "operand types are ‘std::ostream’" in self.err_message and "no match for ‘operator>>’" in self.err_message and "cout" in self.err_src_snippet:
       return "You appear to have written something like 'cout >> my_var', when you should have done 'cout << my_var'."
+    
+    if "cannot bind non-const lvalue reference of type" in self.err_message and "to an rvalue of type" in self.err_message:
+      lval_type = self.err_message.split("lvalue reference of type ")[1].split(" to an rvalue")[0][1:-1]
+      rval_type = self.err_message.split("rvalue of type ")[1].strip()[1:-1]
+      
+      return "You have passed a value of type {} to a function expecting a reference type {}".format(colored(rval_type, 'red'), colored(lval_type, 'red'))
     
     return self.err_message + "\n" + self.err_src_snippet
 
