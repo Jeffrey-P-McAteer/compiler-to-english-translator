@@ -56,7 +56,8 @@ class CppError():
       lval_type = self.err_message.split("lvalue reference of type ")[1].split(" to an rvalue")[0][1:-1]
       rval_type = self.err_message.split("rvalue of type ")[1].strip()[1:-1]
       
-      return "You have passed a value of type {} to a function expecting a reference type {}".format(colored(rval_type, 'red'), colored(lval_type, 'red'))
+      return "You have passed a value of type {} to a function expecting a reference type {}".format(colored(rval_type, 'red'), colored(lval_type, 'red'))+"\n"+ \
+             "Perform percussive ampersand maintenance by adding '&' before the value passed in until error goes away."
     
     return self.err_message + "\n" + self.err_src_snippet
 
