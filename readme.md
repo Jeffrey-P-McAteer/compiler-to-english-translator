@@ -19,3 +19,12 @@ so make sure the error stream is directed to `./translator.py`.
 
 Also `./translator.py` uses python3.
 
+## Prereqs
+
+The `termcolor` module is used to provide terminal colors.
+
+```
+sudo pip3 install termcolor
+```
+
+

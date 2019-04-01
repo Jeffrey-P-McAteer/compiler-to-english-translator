@@ -2,6 +2,9 @@
 
 import fileinput
 
+# sudo pip3 install termcolor
+from termcolor import colored
+
 # Represents a single error message
 class CppError():
   # input_stream is a stream that can be iterated over as lines
@@ -12,7 +15,7 @@ class CppError():
     self.err_src_snippet = None
     
     for line in input_stream:
-      if " In function " in line or "file included from" in line or ("from " in line and line[-1] == ","):
+      if " In function " in line or "file included from" in line or ("from " in line and (line[-1] == "," or line[-2] == "," )):
         continue # this data currently ignored
       
       if self.err_file == None and self.err_line == None:
@@ -34,13 +37,19 @@ class CppError():
     if self.err_file == None:
       raise Exception("No file in error message")
 
-  def translate_message(self):
+  def translated_message(self):
     if " must return " in self.err_message:
       func_name = self.err_message.split(" ")[1][1:-1]
       ret_type = self.err_message.split(" ")[-1][1:-2]
-      return "The function {} must return something of type {}".format(func_name, ret_type)
+      if func_name == "::main" or func_name == "main":
+        return "Your main function returns something of type {}, when any sane program will return an integer.".format(colored(ret_type, 'red'))
+      else:
+        return "The function {} must return something of type {}".format(colored(func_name, 'red'), colored(ret_type, 'red'))
     
-    return self.err_message
+    if "operand types are ‘std::ostream’" in self.err_message and "no match for ‘operator>>’" in self.err_message and "cout" in self.err_src_snippet:
+      return "You appear to have written something like 'cout >> my_var', when you should have done 'cout << my_var'."
+    
+    return self.err_message + "\n" + self.err_src_snippet
 
 
 if __name__ == '__main__':
@@ -50,6 +59,8 @@ if __name__ == '__main__':
     while True:
       # CppError throws exception at end of input
       err = CppError(input_stream)
+      if "note: " in err.err_message or "note: " in err.err_src_snippet:
+        continue
       all_errors.append(err)
       
   except Exception as e:
@@ -57,7 +68,10 @@ if __name__ == '__main__':
     print("Done reading in errors")
   
   print("{} errors".format(len(all_errors)))
+  print("")
   
   for error in all_errors:
-    print(error.translate_message())
+    print("in file {} line {}:".format(error.err_file, error.err_line))
+    print(error.translated_message())
+    print("")
   
