@@ -68,6 +68,9 @@ class CppError():
       return "You have passed a value of type {} to a function expecting a reference type {}".format(colored(rval_type, 'red'), colored(lval_type, 'red'))+"\n"+ \
              "Perform percussive ampersand maintenance by adding '&' before the value passed in until error goes away."
     
+    if "expected ‘;’":
+      return "You forgot a semicolon ding-dong"
+    
     if len(self.get_err_src_snippet()) > 1:
       return self.err_message + "\n" + self.get_err_src_snippet()
     else:
@@ -83,6 +86,8 @@ if __name__ == '__main__':
         # CppError throws exception at end of input
         err = CppError(input_stream)
         if "note: " in err.err_message or "note: " in err.get_err_src_snippet():
+          continue
+        if len(err.err_message) < 2:
           continue
         all_errors.append(err)
       except Exception as e:
