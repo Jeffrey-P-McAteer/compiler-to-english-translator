@@ -27,6 +27,10 @@ class CppError():
         self.err_line = split_file_and_number[1]
         split_error_token = line.split("error:")
         self.err_message = split_error_token[1] if len(split_error_token) > 1 else ""
+        # #error never has code after it, so we break on the first input line
+        if "#error" in self.err_message:
+          break
+        
         continue
       
       if self.err_src_snippet == None:
@@ -40,16 +44,21 @@ class CppError():
     if self.err_file == None:
       raise Exception("No file in error message")
 
+  def get_err_src_snippet(self):
+    if self.err_src_snippet == None:
+      return ""
+    return self.err_src_snippet
+
   def translated_message(self):
     if " must return " in self.err_message:
       func_name = self.err_message.split(" ")[1][1:-1]
       ret_type = self.err_message.split(" ")[-1][1:-2]
       if func_name == "::main" or func_name == "main":
-        return "Your main function returns something of type {}, when any sane program will return an integer.".format(colored(ret_type, 'red'))
+        return "hey ding-dong, your main function returns something of type {}, when any sane program will return an integer.".format(colored(ret_type, 'red'))
       else:
         return "The function {} must return something of type {}".format(colored(func_name, 'red'), colored(ret_type, 'red'))
     
-    if "operand types are ‘std::ostream’" in self.err_message and "no match for ‘operator>>’" in self.err_message and "cout" in self.err_src_snippet:
+    if "operand types are ‘std::ostream’" in self.err_message and "no match for ‘operator>>’" in self.err_message and "cout" in self.get_err_src_snippet():
       return "You appear to have written something like 'cout >> my_var', when you should have done 'cout << my_var'."
     
     if "cannot bind non-const lvalue reference of type" in self.err_message and "to an rvalue of type" in self.err_message:
@@ -59,7 +68,10 @@ class CppError():
       return "You have passed a value of type {} to a function expecting a reference type {}".format(colored(rval_type, 'red'), colored(lval_type, 'red'))+"\n"+ \
              "Perform percussive ampersand maintenance by adding '&' before the value passed in until error goes away."
     
-    return self.err_message + "\n" + self.err_src_snippet
+    if len(self.get_err_src_snippet()) > 1:
+      return self.err_message + "\n" + self.get_err_src_snippet()
+    else:
+      return self.err_message
 
 
 if __name__ == '__main__':
@@ -67,11 +79,17 @@ if __name__ == '__main__':
   try:
     input_stream = fileinput.input()
     while True:
-      # CppError throws exception at end of input
-      err = CppError(input_stream)
-      if "note: " in err.err_message or "note: " in err.err_src_snippet:
-        continue
-      all_errors.append(err)
+      try:
+        # CppError throws exception at end of input
+        err = CppError(input_stream)
+        if "note: " in err.err_message or "note: " in err.get_err_src_snippet():
+          continue
+        all_errors.append(err)
+      except Exception as e:
+        if "list index out of range" in str(e):
+          continue
+        else:
+          raise e
       
   except Exception as e:
     #print(e)
@@ -79,6 +97,11 @@ if __name__ == '__main__':
   
   print("{} errors".format(len(all_errors)))
   print("")
+  
+#   if len(all_errors) > 99:
+#     print("""
+# # TODO 99 problems ASCII art
+# """)
   
   for error in all_errors:
     print("in file {} line {}:".format(error.err_file, error.err_line))
